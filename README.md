@@ -2,9 +2,8 @@
 
 <div align="center">
   
-  ![Versión](https://img.shields.io/badge/Versión-1.0-brightgreen)
+  ![Versión](https://img.shields.io/badge/Versión-1.4-brightgreen)
   ![Estado](https://img.shields.io/badge/Estado-En%20Desarrollo-yellow)
-  [![Licencia](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
   
 </div>
 
@@ -55,9 +54,9 @@ Actualmente, la implementación de la base de datos se encuentra en el archivo `
   <tr>
     <td align="center">
       <a href="https://github.com/Vsdestroyer0">
-        <img src="https://github.com/identicons/Vsdestroyer0.png" width="100px;" alt="Guillermo Gongora Mendoza"/>
+        <img src="https://i.redd.it/tmchrxrasnf51.jpg" width="100px;" alt="Guillermo Gongora Mendoza"/>
         <br />
-        <sub><b>Guillermo Gongora Mendoza</b></sub>
+        <sub><b>Vsdestroyer0</b></sub>
       </a>
     </td>
     <td align="center">
