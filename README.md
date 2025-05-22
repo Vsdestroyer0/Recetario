@@ -54,8 +54,8 @@ Actualmente, la implementación de la base de datos se encuentra en el archivo `
 <table>
   <tr>
     <td align="center">
-      <a href="https://github.com/username">
-        <img src="https://github.com/identicons/guillermo.png" width="100px;" alt="Guillermo Gongora Mendoza"/>
+      <a href="https://github.com/Vsdestroyer0">
+        <img src="https://github.com/identicons/Vsdestroyer0.png" width="100px;" alt="Guillermo Gongora Mendoza"/>
         <br />
         <sub><b>Guillermo Gongora Mendoza</b></sub>
       </a>
