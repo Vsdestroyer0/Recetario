@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receta - KiwiLimón</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="https://www.shutterstock.com/image-vector/fork-spoon-logo-design-icon-600nw-2478160353.jpg">
+
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <h1>KiwiLimón</h1>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Inicio</a>
+                <a href="index.html#recipes-section">Recetas</a>
+                <a href="login.html" id="loginBtn" class="auth-link">Iniciar Sesión</a>
+                <a href="register.html" id="registerBtn" class="auth-link">Registrarse</a>
+                <a href="add-recipe.html" id="addRecipeBtn" class="auth-link hidden">Publicar Receta</a>
+                <a href="profile.html" id="profileBtn" class="auth-link hidden">Mi Perfil</a>
+                <button id="logoutBtn" class="auth-link hidden">Cerrar Sesión</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Recipe Content -->
+    <section class="recipe-detail">
+        <div class="recipe-container" id="recipeContainer">
+            <!-- Recipe details will be loaded dynamically -->
+        </div>
+        
+        <!-- Comments Section -->
+        <div class="comments-section">
+            <h3>Comentarios</h3>
+            
+            <div class="add-comment" id="addCommentSection">
+                <h4>Deja tu comentario</h4>
+                <form id="commentForm">
+                    <div class="rating-input">
+                        <label>Tu valoración:</label>
+                        <div class="stars">
+                            <input type="radio" id="star5" name="rating" value="5">
+                            <label for="star5"></label>
+                            <input type="radio" id="star4" name="rating" value="4">
+                            <label for="star4"></label>
+                            <input type="radio" id="star3" name="rating" value="3">
+                            <label for="star3"></label>
+                            <input type="radio" id="star2" name="rating" value="2">
+                            <label for="star2"></label>
+                            <input type="radio" id="star1" name="rating" value="1">
+                            <label for="star1"></label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="commentText">Tu comentario:</label>
+                        <textarea id="commentText" rows="4" required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Publicar Comentario</button>
+                </form>
+            </div>
+            
+            <div class="login-prompt hidden" id="loginPrompt">
+                <p>Debes <a href="login.html">iniciar sesión</a> para dejar un comentario.</p>
+            </div>
+            
+            <div class="comments-list" id="commentsList">
+                <!-- Comments will be loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>KiwiLimón</h3>
+                <p>La mejor comunidad para compartir y descubrir recetas. Y para pasar UX</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Enlaces Rápidos</h3>
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="index.html#recipes-section">Recetas</a></li>
+                    <li><a href="login.html">Iniciar Sesión</a></li>
+                    <li><a href="register.html">Registrarse</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Contáctanos</h3>
+                <p>Email: ggmendoza2005@gmail.com</p>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/guillermo.gongoramendoza?locale=es_LA"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/gongora_gm/"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 KiwiLimón - Todos los derechos reservados para los LISTI</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/recipes.js"></script>
+</body>
+</html>

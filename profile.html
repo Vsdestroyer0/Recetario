@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - KiwiLimón</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="https://www.shutterstock.com/image-vector/fork-spoon-logo-design-icon-600nw-2478160353.jpg">
+
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <h1>KiwiLimón</h1>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Inicio</a>
+                <a href="index.html#recipes-section">Recetas</a>
+                <a href="add-recipe.html" id="addRecipeBtn" class="auth-link">Publicar Receta</a>
+                <a href="profile.html" id="profileBtn" class="auth-link active">Mi Perfil</a>
+                <button id="logoutBtn" class="auth-link">Cerrar Sesión</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Profile Content -->
+    <section class="profile-section">
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <img id="userAvatar" src="" alt="Avatar de usuario">
+                    <button class="edit-avatar-btn" id="editAvatarBtn">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                
+                <div class="profile-info">
+                    <h2 id="userName"></h2>
+                    <p id="userEmail"></p>
+                    <p>Miembro desde: <span id="joinDate"></span></p>
+                    <button class="btn btn-secondary" id="editProfileBtn">
+                        <i class="fas fa-edit"></i> Editar Perfil
+                    </button>
+                </div>
+            </div>
+            
+            <div class="profile-stats">
+                <div class="stat">
+                    <h3 id="recipesCount">0</h3>
+                    <p>Recetas</p>
+                </div>
+                <div class="stat">
+                    <h3 id="likesCount">0</h3>
+                    <p>Me gusta</p>
+                </div>
+                <div class="stat">
+                    <h3 id="commentsCount">0</h3>
+                    <p>Comentarios</p>
+                </div>
+            </div>
+            
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="my-recipes">Mis Recetas</button>
+                <button class="tab-btn" data-tab="favorites">Favoritos</button>
+                <button class="tab-btn" data-tab="comments">Mis Comentarios</button>
+            </div>
+            
+            <div class="tab-content active" id="my-recipes">
+                <h3>Mis Recetas</h3>
+                <div class="recipes-grid" id="userRecipesContainer">
+                    <!-- User recipes will be loaded dynamically -->
+                </div>
+            </div>
+            
+            <div class="tab-content" id="favorites">
+                <h3>Recetas Favoritas</h3>
+                <div class="recipes-grid" id="favoritesContainer">
+                    <!-- Favorite recipes will be loaded dynamically -->
+                </div>
+            </div>
+            
+            <div class="tab-content" id="comments">
+                <h3>Mis Comentarios</h3>
+                <div class="comments-list" id="userCommentsContainer">
+                    <!-- User comments will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal" id="editProfileModal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Editar Perfil</h2>
+            
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label for="editFirstName">Nombre</label>
+                    <input type="text" id="editFirstName">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editLastName">Apellido</label>
+                    <input type="text" id="editLastName">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editUsername">Nombre de usuario</label>
+                    <input type="text" id="editUsername">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editBio">Biografía</label>
+                    <textarea id="editBio" rows="4"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>KiwiLimón</h3>
+                <p>La mejor comunidad para compartir y descubrir recetas. Y para pasar UX</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Enlaces Rápidos</h3>
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="index.html#recipes-section">Recetas</a></li>
+                    <li><a href="login.html">Iniciar Sesión</a></li>
+                    <li><a href="register.html">Registrarse</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Contáctanos</h3>
+                <p>Email: ggmendoza2005@gmail.com</p>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/guillermo.gongoramendoza?locale=es_LA"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/gongora_gm/"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 KiwiLimón - Todos los derechos reservados para los LISTI</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KiwiLimón - Descubre y comparte recetas :D</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="https://www.shutterstock.com/image-vector/fork-spoon-logo-design-icon-600nw-2478160353.jpg">
+
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <h1>KiwiLimón</h1>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="active">Inicio</a>
+                <a href="#recipes-section">Recetas</a>
+                <a href="login.html" id="loginBtn" class="auth-link">Iniciar Sesión</a>
+                <a href="register.html" id="registerBtn" class="auth-link">Registrarse</a>
+                <a href="add-recipe.html" id="addRecipeBtn" class="auth-link hidden">Publicar Receta</a>
+                <a href="profile.html" id="profileBtn" class="auth-link hidden">Mi Perfil</a>
+                <button id="logoutBtn" class="auth-link hidden">Cerrar Sesión</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h2>Descubre, comparte y disfruta</h2>
+        <div class="hero-buttons">
+            <a href="#recipes-section" class="btn btn-primary">Ver Recetas</a>
+            <a href="add-recipe.html" id="heroAddRecipeBtn" class="btn btn-secondary">Publicar Receta</a>
+        </div>
+    </section>
+
+    <!-- Featured Recipes -->
+    <section id="recipes-section" class="recipes-section">
+        <h2 class="section-title">Recetas Destacadas</h2>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label for="categoryFilter">Categoría:</label>
+                <select id="categoryFilter">
+                    <option value="all">Todas</option>
+                    <option value="main">Platos Principales</option>
+                    <option value="dessert">Postres</option>
+                    <option value="breakfast">Desayunos</option>
+                    <option value="drinks">Bebidas</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="sortFilter">Ordenar por:</label>
+                <select id="sortFilter">
+                    <option value="latest">Más Recientes</option>
+                    <option value="popular">Más Populares</option>
+                    <option value="rating">Mejor Valoradas</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="recipes-grid" id="recipesContainer">
+            <!-- Recipes will be loaded here dynamically -->
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>KiwiLimón</h3>
+                <p>La mejor comunidad para compartir y descubrir recetas. Y para pasar UX</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Enlaces Rápidos</h3>
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="#recipes-section">Recetas</a></li>
+                    <li><a href="login.html">Iniciar Sesión</a></li>
+                    <li><a href="register.html">Registrarse</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Contáctanos</h3>
+                <p>Email: ggmendoza2005@gmail.com</p>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/guillermo.gongoramendoza?locale=es_LA"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/gongora_gm/"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 KiwiLimón - Todos los derechos reservados para los LISTI</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/recipes.js"></script>
+</body>
+</html>
