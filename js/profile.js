@@ -83,6 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editAvatarBtn) {
         editAvatarBtn.addEventListener('click', changeAvatar);
     }
+    
+    // Event listener para editar receta
+    document.querySelectorAll('.edit-recipe').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const recipeId = parseInt(this.getAttribute('data-id'));
+            editRecipe(recipeId);
+        });
+    });
 });
 
 // Cargar perfil del usuario
@@ -210,15 +218,7 @@ function loadUserRecipes() {
             </div>
         `).join('');
         
-        // Añadir event listeners para editar y eliminar
-        document.querySelectorAll('.edit-recipe').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const recipeId = parseInt(this.getAttribute('data-id'));
-                // Aquí iría la lógica para editar receta (futura implementación)
-                alert('Función de edición de recetas en desarrollo');
-            });
-        });
-        
+        // Añadir event listeners para eliminar
         document.querySelectorAll('.delete-recipe').forEach(btn => {
             btn.addEventListener('click', function() {
                 const recipeId = parseInt(this.getAttribute('data-id'));
@@ -486,4 +486,29 @@ function deleteRecipe(recipeId) {
     updateUserStats(users[userIndex]);
     
     alert('Receta eliminada correctamente');
+}
+
+// Editar receta
+function editRecipe(recipeId) {
+    // Obtener usuario actual
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+    
+    // Obtener recetas
+    const recipes = JSON.parse(localStorage.getItem('recipes')) || [];
+    const recipe = recipes.find(r => r.id === recipeId);
+    
+    if (!recipe) {
+        alert('No se encontró la receta');
+        return;
+    }
+    
+    // Verificar que la receta pertenece al usuario
+    if (recipe.authorId !== currentUser.id) {
+        alert('No tienes permiso para editar esta receta');
+        return;
+    }
+    
+    // Redireccionar a la página de edición con el ID de la receta
+    window.location.href = `edit-recipe.html?id=${recipeId}`;
 }
