@@ -1,4 +1,4 @@
-# 🥝 KiwiLimón 🍋
+# Recetario UX
 
 <div align="center">
   
