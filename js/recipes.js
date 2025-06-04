@@ -68,61 +68,131 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Cargar recetas en la página principal
+// ✅ CARGAR RECETAS ACTUALIZADO
 function loadRecipes() {
     const recipesContainer = document.getElementById('recipesContainer');
     if (!recipesContainer) return;
 
+    console.log('🔍 Cargando recetas...');
+    
     const categoryFilter = document.getElementById('categoryFilter')?.value || 'all';
     const sortFilter = document.getElementById('sortFilter')?.value || 'latest';
 
+    // Mostrar loading
+    recipesContainer.innerHTML = '<div class="loading">Cargando recetas...</div>';
+
     fetch('/recipes')
-        .then(res => res.json())
-        .then(recipes => {
-            if (categoryFilter !== 'all') recipes = recipes.filter(r => r.category === categoryFilter);
+        .then(res => {
+            console.log('📡 Respuesta recibida:', res.status);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('📊 Datos recibidos:', data);
+            
+            // ✅ Obtener el array de recetas del objeto respuesta
+            let recipes = data.recipes || data || [];
+            
+            console.log(`📋 Procesando ${recipes.length} recetas`);
+            
+            // Aplicar filtros
+            if (categoryFilter !== 'all') {
+                recipes = recipes.filter(r => r.category === categoryFilter);
+                console.log(`🔍 Después del filtro de categoría: ${recipes.length} recetas`);
+            }
+            
+            // Aplicar ordenamiento
             recipes = sortRecipes(recipes, sortFilter);
+            
+            // Generar HTML
+            if (recipes.length === 0) {
+                recipesContainer.innerHTML = `
+                    <div class="no-recipes">
+                        <p>No hay recetas disponibles.</p>
+                        <a href="add-recipe.html" class="btn btn-primary">¡Publica la primera receta!</a>
+                    </div>
+                `;
+                return;
+            }
+            
             recipesContainer.innerHTML = recipes.map(recipe => `
                 <div class="recipe-card">
-                    <div class="recipe-image"><img src="${recipe.image}" alt="${recipe.title}"></div>
+                    <div class="recipe-image">
+                        <img src="${recipe.image || 'https://via.placeholder.com/300x200'}" 
+                             alt="${recipe.title}"
+                             onerror="this.src='https://via.placeholder.com/300x200?text=Sin+Imagen'">
+                    </div>
                     <div class="recipe-content">
                         <h3 class="recipe-title">${recipe.title}</h3>
                         <div class="recipe-meta">
                             <span>${formatDate(recipe.createdAt)}</span>
-                            <span class="recipe-rating">${generateStarRating(recipe.rating)} (${recipe.ratingCount || 0})</span>
+                            <span class="recipe-rating">
+                                ${generateStarRating(recipe.rating || 0)} 
+                                (${recipe.ratingCount || 0})
+                            </span>
                         </div>
-                        <p class="recipe-description">${recipe.description}</p>
+                        <p class="recipe-description">${recipe.description || 'Sin descripción'}</p>
                         <div class="recipe-footer">
                             <div class="recipe-author">
-                                <img src="${recipe.authorAvatar || getUserAvatar(recipe.authorId)}" alt="${recipe.author}">
-                                <span>${recipe.author}</span>
+                                <img src="${recipe.authorAvatar || getUserAvatar(recipe.authorId)}" 
+                                     alt="${recipe.author || 'Usuario'}"
+                                     onerror="this.src='https://ui-avatars.com/api/?name=Usuario&background=random'">
+                                <span>${recipe.author || 'Usuario desconocido'}</span>
                             </div>
-                            <a href="recipe.html?id=${recipe._id}" class="view-recipe">Ver Receta <i class="fas fa-arrow-right"></i></a>
+                            <a href="recipe.html?id=${recipe._id}" class="view-recipe">
+                                Ver Receta <i class="fas fa-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
             `).join('');
-            if (recipes.length === 0) recipesContainer.innerHTML = `<div class="no-recipes"><p>No hay recetas.</p></div>`;
+            
+            console.log('✅ Recetas cargadas exitosamente');
         })
-        .catch(err => console.error('Error cargando recetas:', err));
+        .catch(err => {
+            console.error('💥 Error cargando recetas:', err);
+            recipesContainer.innerHTML = `
+                <div class="error-message">
+                    <p>Error al cargar las recetas. Por favor, intenta de nuevo.</p>
+                    <button onclick="loadRecipes()" class="btn btn-secondary">Reintentar</button>
+                </div>
+            `;
+        });
 }
 
-// Cargar detalles de una receta
+// ✅ CARGAR DETALLES DE RECETA ACTUALIZADO
 function loadRecipeDetails() {
     const recipeContainer = document.getElementById('recipeContainer');
     if (!recipeContainer) return;
     
     // Obtener ID de la receta de la URL
     const urlParams = new URLSearchParams(window.location.search);
-    const recipeId = parseInt(urlParams.get('id'));
+    const recipeId = urlParams.get('id'); // ✅ No convertir a int, mantener como string
+    
+    console.log('📖 Cargando receta con ID:', recipeId);
     
     if (!recipeId) {
+        console.log('❌ No se encontró ID de receta en la URL');
         window.location.href = 'index.html';
         return;
     }
     
+    // Mostrar loading
+    recipeContainer.innerHTML = '<div class="loading">Cargando receta...</div>';
+    
     fetch(`/recipes/${recipeId}`)
-        .then(res => res.json())
+        .then(res => {
+            console.log('📡 Respuesta del servidor:', res.status);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
         .then(recipe => {
+            console.log('📊 Datos de la receta:', recipe);
+            
             if (!recipe) {
                 recipeContainer.innerHTML = `
                     <div class="recipe-not-found">
@@ -135,54 +205,59 @@ function loadRecipeDetails() {
             }
             
             // Actualizar título de la página
-            document.title = `${recipe.title} - KiwiLimón`;
+            document.title = `${recipe.title} - Recetario`;
             
             // Mostrar detalles de la receta
             recipeContainer.innerHTML = `
                 <div class="recipe-header">
-                    <img src="${recipe.image}" alt="${recipe.title}" class="recipe-header-image">
+                    <img src="${recipe.image || 'https://via.placeholder.com/800x400'}" 
+                         alt="${recipe.title}" 
+                         class="recipe-header-image"
+                         onerror="this.src='https://via.placeholder.com/800x400?text=Sin+Imagen'">
                     <div class="recipe-header-overlay">
                         <h1 class="recipe-title-large">${recipe.title}</h1>
                         <div class="recipe-author-large">
-                            <img src="${getUserAvatar(recipe.authorId)}" alt="${recipe.author}">
-                            <span>Por ${recipe.author}</span>
+                            <img src="${recipe.authorAvatar || getUserAvatar(recipe.authorId)}" 
+                                 alt="${recipe.author || 'Usuario'}"
+                                 onerror="this.src='https://ui-avatars.com/api/?name=Usuario&background=random'">
+                            <span>Por ${recipe.author || 'Usuario desconocido'}</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="recipe-stats">
                     <div class="stat-item">
-                        <span class="stat-value">${recipe.prepTime}</span>
+                        <span class="stat-value">${recipe.prepTime || 0}</span>
                         <span class="stat-label">Prep (min)</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${recipe.cookTime}</span>
+                        <span class="stat-value">${recipe.cookTime || 0}</span>
                         <span class="stat-label">Cocción (min)</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${recipe.servings}</span>
+                        <span class="stat-value">${recipe.servings || 1}</span>
                         <span class="stat-label">Porciones</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${generateStarRating(recipe.rating)}</span>
-                        <span class="stat-label">${recipe.rating.toFixed(1)} (${recipe.ratingCount || 0})</span>
+                        <span class="stat-value">${generateStarRating(recipe.rating || 0)}</span>
+                        <span class="stat-label">${(recipe.rating || 0).toFixed(1)} (${recipe.ratingCount || 0})</span>
                     </div>
                 </div>
                 
                 <div class="recipe-body">
-                    <p class="recipe-description-large">${recipe.description}</p>
+                    <p class="recipe-description-large">${recipe.description || 'Sin descripción disponible'}</p>
                     
                     <div class="recipe-section">
                         <h2 class="recipe-section-title">Ingredientes</h2>
                         <ul class="ingredients-list">
-                            ${recipe.ingredients.map(ing => `<li>${ing}</li>`).join('')}
+                            ${(recipe.ingredients || []).map(ing => `<li>${ing}</li>`).join('')}
                         </ul>
                     </div>
                     
                     <div class="recipe-section">
                         <h2 class="recipe-section-title">Instrucciones</h2>
                         <ol class="instructions-list">
-                            ${recipe.instructions.map(inst => `<li>${inst}</li>`).join('')}
+                            ${(recipe.instructions || []).map(inst => `<li>${inst}</li>`).join('')}
                         </ol>
                     </div>
                 </div>
@@ -191,17 +266,38 @@ function loadRecipeDetails() {
             // Cargar comentarios
             loadComments(recipeId);
         })
-        .catch(err => console.error('Error cargando receta:', err));
+        .catch(err => {
+            console.error('💥 Error cargando receta:', err);
+            recipeContainer.innerHTML = `
+                <div class="error-message">
+                    <h2>Error al cargar la receta</h2>
+                    <p>Hubo un problema al cargar los detalles de la receta.</p>
+                    <a href="index.html" class="btn btn-primary">Volver al inicio</a>
+                </div>
+            `;
+        });
 }
 
-// Cargar comentarios de una receta
+// ✅ CARGAR COMENTARIOS ACTUALIZADO
 function loadComments(recipeId) {
     const commentsList = document.getElementById('commentsList');
     if (!commentsList) return;
     
+    console.log('💬 Cargando comentarios para receta:', recipeId);
+    
     fetch(`/recipes/${recipeId}/comments`)
-        .then(res => res.json())
-        .then(comments => {
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('💬 Datos de comentarios:', data);
+            
+            // ✅ Obtener comentarios del objeto respuesta
+            const comments = data.comments || data || [];
+            
             if (!comments || comments.length === 0) {
                 commentsList.innerHTML = `
                     <div class="no-comments">
@@ -216,36 +312,77 @@ function loadComments(recipeId) {
                 <div class="comment-item">
                     <div class="comment-header">
                         <div class="comment-author">
-                            <img src="${getUserAvatar(comment.userId)}" alt="${comment.author}">
-                            <span>${comment.author}</span>
+                            <img src="${comment.authorAvatar || getUserAvatar(comment.userId)}" 
+                                 alt="${comment.author || 'Usuario'}"
+                                 onerror="this.src='https://ui-avatars.com/api/?name=Usuario&background=random'">
+                            <span>${comment.author || 'Usuario desconocido'}</span>
                         </div>
                         <div class="comment-date">${formatDate(comment.createdAt)}</div>
                     </div>
-                    <div class="comment-rating">${generateStarRating(comment.rating)}</div>
-                    <p class="comment-text">${comment.content}</p>
+                    <div class="comment-rating">${generateStarRating(comment.rating || 0)}</div>
+                    <p class="comment-text">${comment.content || ''}</p>
                 </div>
             `).join('');
         })
-        .catch(err => console.error('Error cargando comentarios:', err));
+        .catch(err => {
+            console.error('💥 Error cargando comentarios:', err);
+            commentsList.innerHTML = `
+                <div class="error-message">
+                    <p>Error al cargar los comentarios.</p>
+                </div>
+            `;
+        });
 }
 
-// Añadir un comentario
+// ✅ AGREGAR COMENTARIO ACTUALIZADO
 function addComment(e) {
     e.preventDefault();
-    if (!isAuthenticated()) return alert('Debes iniciar sesión para comentar');
+    
+    if (!isAuthenticated()) {
+        alert('Debes iniciar sesión para comentar');
+        return;
+    }
+    
     const urlParams = new URLSearchParams(window.location.search);
-    const rid = urlParams.get('id');
-    const content = document.getElementById('commentContent').value;
-    const rating = parseInt(document.getElementById('commentRating').value);
+    const recipeId = urlParams.get('id');
+    const content = document.getElementById('commentText')?.value || document.getElementById('commentContent')?.value;
+    const ratingInputs = document.querySelectorAll('input[name="rating"]:checked');
+    const rating = ratingInputs.length > 0 ? parseInt(ratingInputs[0].value) : 
+                   parseInt(document.getElementById('commentRating')?.value) || 5;
+    
+    if (!content || !content.trim()) {
+        alert('Por favor, escribe un comentario');
+        return;
+    }
+    
     const currentUser = getCurrentUser();
-    fetch(`/recipes/${rid}/comments`, {
+    
+    console.log('💬 Enviando comentario:', { recipeId, content, rating, userId: currentUser.id });
+    
+    fetch(`/recipes/${recipeId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, content, rating })
+        body: JSON.stringify({ 
+            userId: currentUser.id, 
+            content: content.trim(), 
+            rating 
+        })
     })
-        .then(res => res.json())
-        .then(() => window.location.reload())
-        .catch(err => alert('Error al agregar comentario: ' + err.message));
+    .then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+    })
+    .then(data => {
+        console.log('✅ Comentario agregado:', data);
+        alert('¡Comentario agregado exitosamente!');
+        window.location.reload();
+    })
+    .catch(err => {
+        console.error('💥 Error agregando comentario:', err);
+        alert('Error al agregar comentario: ' + err.message);
+    });
 }
 
 // Enviar formulario de receta
@@ -401,4 +538,42 @@ function sortRecipes(recipes, sortCriteria) {
         default:
             return recipes;
     }
+}
+
+// ✅ FUNCIONES AUXILIARES ACTUALIZADAS
+function formatDate(dateString) {
+    if (!dateString) return 'Fecha desconocida';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } catch (e) {
+        return 'Fecha inválida';
+    }
+}
+
+function generateStarRating(rating) {
+    const numRating = parseFloat(rating) || 0;
+    const stars = [];
+    const fullStars = Math.floor(numRating);
+    const hasHalfStar = numRating % 1 >= 0.5;
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars.push('<i class="fas fa-star"></i>');
+    }
+    
+    if (hasHalfStar) {
+        stars.push('<i class="fas fa-star-half-alt"></i>');
+    }
+    
+    const emptyStars = 5 - Math.ceil(numRating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars.push('<i class="far fa-star"></i>');
+    }
+    
+    return stars.join('');
 }

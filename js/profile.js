@@ -1,4 +1,4 @@
-// Funcionalidad para la página de perfil
+// profile.js - VERSIÓN ACTUALIZADA PARA ORACLE
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar autenticación
     if (!isAuthenticated()) {
@@ -6,58 +6,203 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Obtener elementos del DOM
+    // Cargar datos del usuario
+    loadUserProfile();
+    
+    // Event listeners para tabs
+    setupTabs();
+    
+    // Event listeners para editar perfil
+    setupEditProfile();
+});
+
+// ✅ CARGAR PERFIL DESDE ORACLE - ACTUALIZADO
+async function loadUserProfile() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+    
+    try {
+        console.log('🔍 Cargando perfil para usuario ID:', currentUser.id);
+        
+        // Obtener usuario con recetas desde el servidor
+        const response = await fetch(`/users/${currentUser.id}/with-recipes`);
+        
+        if (!response.ok) {
+            throw new Error('Error al cargar el perfil');
+        }
+        
+        const userData = await response.json();
+        console.log('👤 Datos del usuario:', userData);
+        
+        // Actualizar UI con los datos
+        updateProfileUI(userData);
+        
+    } catch (error) {
+        console.error('Error cargando perfil:', error);
+        // Usar datos del localStorage como fallback
+        loadProfileFromLocalStorage();
+    }
+}
+
+// ✅ ACTUALIZAR INTERFAZ CON DATOS DE ORACLE - ACTUALIZADO
+function updateProfileUI(userData) {
+    // Elementos básicos del perfil
     const userAvatar = document.getElementById('userAvatar');
     const userName = document.getElementById('userName');
     const userEmail = document.getElementById('userEmail');
     const joinDate = document.getElementById('joinDate');
+    
+    // Actualizar datos básicos con estructura actualizada
+    if (userAvatar) {
+        userAvatar.src = userData.avatar || `https://ui-avatars.com/api/?name=${userData.firstName}+${userData.lastName}&background=random`;
+    }
+    if (userName) {
+        userName.textContent = `${userData.firstName} ${userData.lastName}`;
+    }
+    if (userEmail) {
+        userEmail.textContent = userData.email;
+    }
+    if (joinDate) {
+        joinDate.textContent = 'Recién registrado'; // Puedes agregar fecha real después
+    }
+    
+    // Actualizar estadísticas
+    updateUserStats(userData);
+    
+    // Cargar recetas del usuario
+    loadUserRecipesFromData(userData.recipes || []);
+    
+    // Pre-llenar formulario de edición
+    prefillEditForm(userData);
+}
+
+// ✅ ACTUALIZAR ESTADÍSTICAS - ACTUALIZADO
+function updateUserStats(userData) {
     const recipesCount = document.getElementById('recipesCount');
     const likesCount = document.getElementById('likesCount');
     const commentsCount = document.getElementById('commentsCount');
     
-    // Elementos para tabs
+    // Usar totalRecipes del backend o contar las recetas
+    if (recipesCount) {
+        recipesCount.textContent = userData.totalRecipes || (userData.recipes ? userData.recipes.length : 0);
+    }
+    
+    // Por ahora, valores por defecto (puedes implementar después)
+    if (likesCount) likesCount.textContent = '0';
+    if (commentsCount) commentsCount.textContent = '0';
+}
+
+// ✅ CARGAR RECETAS DEL USUARIO - ACTUALIZADO
+function loadUserRecipesFromData(recipes) {
+    const userRecipesContainer = document.getElementById('userRecipesContainer');
+    if (!userRecipesContainer) return;
+    
+    if (!recipes || recipes.length === 0) {
+        userRecipesContainer.innerHTML = `
+            <div class="no-recipes">
+                <p>Aún no has publicado ninguna receta.</p>
+                <a href="add-recipe.html" class="btn btn-primary">Publicar mi primera receta</a>
+            </div>
+        `;
+        return;
+    }
+    
+    // Mostrar recetas con estructura actualizada
+    userRecipesContainer.innerHTML = recipes.map(recipe => `
+        <div class="recipe-card">
+            <div class="recipe-image">
+                <img src="${recipe.image || 'https://via.placeholder.com/300x200'}" alt="${recipe.title}">
+            </div>
+            <div class="recipe-content">
+                <h3 class="recipe-title">${recipe.title}</h3>
+                <div class="recipe-meta">
+                    <span>${formatDate(recipe.createdAt)}</span>
+                    <span class="recipe-rating">${generateStarRating(recipe.rating || 0)} (${recipe.ratingCount || 0})</span>
+                </div>
+                <p class="recipe-description">${recipe.description || 'Sin descripción'}</p>
+                <div class="recipe-footer">
+                    <div class="recipe-actions">
+                        <a href="recipe.html?id=${recipe._id}" class="view-recipe">Ver <i class="fas fa-eye"></i></a>
+                        <button class="edit-recipe" data-id="${recipe._id}">Editar <i class="fas fa-edit"></i></button>
+                        <button class="delete-recipe" data-id="${recipe._id}">Eliminar <i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Event listeners para acciones
+    setupRecipeActions();
+}
+
+// ✅ CONFIGURAR TABS
+function setupTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     
-    // Elementos para editar perfil
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            // Remover clase active
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Añadir clase active
+            button.classList.add('active');
+            const tabId = button.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+            
+            // Cargar contenido según la tab
+            loadTabContent(tabId);
+        });
+    });
+}
+
+// ✅ CARGAR CONTENIDO DE TABS
+function loadTabContent(tabId) {
+    switch(tabId) {
+        case 'favorites':
+            loadUserFavorites();
+            break;
+        case 'comments':
+            loadUserComments();
+            break;
+        // 'my-recipes' ya se carga automáticamente
+    }
+}
+
+// ✅ CARGAR FAVORITOS (placeholder por ahora)
+function loadUserFavorites() {
+    const favoritesContainer = document.getElementById('favoritesContainer');
+    if (!favoritesContainer) return;
+    
+    favoritesContainer.innerHTML = `
+        <div class="no-recipes">
+            <p>Funcionalidad de favoritos próximamente.</p>
+            <a href="index.html#recipes-section" class="btn btn-primary">Explorar recetas</a>
+        </div>
+    `;
+}
+
+// ✅ CARGAR COMENTARIOS (placeholder por ahora)
+function loadUserComments() {
+    const userCommentsContainer = document.getElementById('userCommentsContainer');
+    if (!userCommentsContainer) return;
+    
+    userCommentsContainer.innerHTML = `
+        <div class="no-comments">
+            <p>Funcionalidad de comentarios próximamente.</p>
+            <a href="index.html#recipes-section" class="btn btn-primary">Explorar recetas</a>
+        </div>
+    `;
+}
+
+// ✅ CONFIGURAR EDICIÓN DE PERFIL
+function setupEditProfile() {
     const editProfileBtn = document.getElementById('editProfileBtn');
     const editProfileModal = document.getElementById('editProfileModal');
     const closeModalBtn = document.querySelector('.close-btn');
     const editProfileForm = document.getElementById('editProfileForm');
-    const editFirstName = document.getElementById('editFirstName');
-    const editLastName = document.getElementById('editLastName');
-    const editUsername = document.getElementById('editUsername');
-    const editBio = document.getElementById('editBio');
     
-    // Cargar datos del usuario
-    loadUserProfile();
-    
-    // Cargar recetas del usuario
-    loadUserRecipes();
-    
-    // Cargar favoritos
-    loadUserFavorites();
-    
-    // Cargar comentarios del usuario
-    loadUserComments();
-    
-    // Event listeners para tabs
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            // Remover clase active de todos los botones y contenidos
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Añadir clase active al botón clickeado
-            button.classList.add('active');
-            
-            // Mostrar contenido correspondiente
-            const tabId = button.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
-        });
-    });
-    
-    // Event listeners para editar perfil
     if (editProfileBtn) {
         editProfileBtn.addEventListener('click', openEditProfileModal);
     }
@@ -73,278 +218,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Manejar envío del formulario de edición
     if (editProfileForm) {
         editProfileForm.addEventListener('submit', updateUserProfile);
     }
-    
-    // Event listener para cambiar avatar
-    const editAvatarBtn = document.getElementById('editAvatarBtn');
-    if (editAvatarBtn) {
-        editAvatarBtn.addEventListener('click', changeAvatar);
-    }
-    
-    // Event listener para editar receta
-    document.querySelectorAll('.edit-recipe').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const recipeId = parseInt(this.getAttribute('data-id'));
-            editRecipe(recipeId);
-        });
-    });
-});
+}
 
-// Cargar perfil del usuario
-function loadUserProfile() {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
-    
-    // Obtener usuario completo desde localStorage
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const user = users.find(u => u.id === currentUser.id);
-    
-    if (!user) return;
-    
-    // Mostrar datos en la interfaz
-    const userAvatar = document.getElementById('userAvatar');
-    const userName = document.getElementById('userName');
-    const userEmail = document.getElementById('userEmail');
-    const joinDate = document.getElementById('joinDate');
-    
-    if (userAvatar) userAvatar.src = user.avatar || 'https://ui-avatars.com/api/?name=Usuario&background=random';
-    if (userName) userName.textContent = `${user.firstName} ${user.lastName}`;
-    if (userEmail) userEmail.textContent = user.email;
-    if (joinDate) joinDate.textContent = formatDate(user.joinDate);
-    
-    // Actualizar contadores
-    updateUserStats(user);
-    
-    // Pre-llenar formulario de edición
+// ✅ PRE-LLENAR FORMULARIO DE EDICIÓN - ACTUALIZADO
+function prefillEditForm(userData) {
     const editFirstName = document.getElementById('editFirstName');
     const editLastName = document.getElementById('editLastName');
     const editUsername = document.getElementById('editUsername');
     const editBio = document.getElementById('editBio');
     
-    if (editFirstName) editFirstName.value = user.firstName || '';
-    if (editLastName) editLastName.value = user.lastName || '';
-    if (editUsername) editUsername.value = user.username || '';
-    if (editBio) editBio.value = user.bio || '';
+    if (editFirstName) editFirstName.value = userData.firstName || '';
+    if (editLastName) editLastName.value = userData.lastName || '';
+    if (editUsername) editUsername.value = userData.username || '';
+    if (editBio) editBio.value = userData.bio || '';
 }
 
-// Actualizar estadísticas del usuario
-function updateUserStats(user) {
-    const recipesCount = document.getElementById('recipesCount');
-    const likesCount = document.getElementById('likesCount');
-    const commentsCount = document.getElementById('commentsCount');
-    
-    // Contar recetas
-    const userRecipes = user.recipes || [];
-    if (recipesCount) recipesCount.textContent = userRecipes.length;
-    
-    // Contar favoritos
-    const userFavorites = user.favorites || [];
-    if (likesCount) likesCount.textContent = userFavorites.length;
-    
-    // Contar comentarios
-    const recipes = JSON.parse(localStorage.getItem('recipes')) || [];
-    let commentCount = 0;
-    
-    recipes.forEach(recipe => {
-        if (recipe.comments) {
-            const userComments = recipe.comments.filter(comment => comment.userId === user.id);
-            commentCount += userComments.length;
-        }
-    });
-    
-    if (commentsCount) commentsCount.textContent = commentCount;
-}
-
-// Cargar recetas del usuario
-function loadUserRecipes() {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
-    
-    const userRecipesContainer = document.getElementById('userRecipesContainer');
-    if (!userRecipesContainer) return;
-    
-    // Obtener usuario completo con sus recetas
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const user = users.find(u => u.id === currentUser.id);
-    
-    if (!user || !user.recipes || user.recipes.length === 0) {
-        userRecipesContainer.innerHTML = `
-            <div class="no-recipes">
-                <p>Aún no has publicado ninguna receta.</p>
-                <a href="add-recipe.html" class="btn btn-primary">Publicar mi primera receta</a>
-            </div>
-        `;
-        return;
-    }
-    
-    // Obtener todas las recetas
-    const allRecipes = JSON.parse(localStorage.getItem('recipes')) || [];
-    
-    // Filtrar recetas del usuario
-    const userRecipes = allRecipes.filter(recipe => user.recipes.includes(recipe.id));
-    
-    // Mostrar recetas
-    if (userRecipes.length === 0) {
-        userRecipesContainer.innerHTML = `
-            <div class="no-recipes">
-                <p>Aún no has publicado ninguna receta.</p>
-                <a href="add-recipe.html" class="btn btn-primary">Publicar mi primera receta</a>
-            </div>
-        `;
-    } else {
-        userRecipesContainer.innerHTML = userRecipes.map(recipe => `
-            <div class="recipe-card">
-                <div class="recipe-image">
-                    <img src="${recipe.image}" alt="${recipe.title}">
-                </div>
-                <div class="recipe-content">
-                    <h3 class="recipe-title">${recipe.title}</h3>
-                    <div class="recipe-meta">
-                        <span>${formatDate(recipe.createdAt)}</span>
-                        <span class="recipe-rating">${generateStarRating(recipe.rating)} (${recipe.ratingCount || 0})</span>
-                    </div>
-                    <p class="recipe-description">${recipe.description}</p>
-                    <div class="recipe-footer">
-                        <div class="recipe-actions">
-                            <a href="recipe.html?id=${recipe.id}" class="view-recipe">Ver <i class="fas fa-eye"></i></a>
-                            <button class="edit-recipe" data-id="${recipe.id}">Editar <i class="fas fa-edit"></i></button>
-                            <button class="delete-recipe" data-id="${recipe.id}">Eliminar <i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        
-        // Añadir event listeners para eliminar
-        document.querySelectorAll('.delete-recipe').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const recipeId = parseInt(this.getAttribute('data-id'));
-                if (confirm('¿Estás seguro de que deseas eliminar esta receta?')) {
-                    deleteRecipe(recipeId);
-                }
-            });
-        });
-    }
-}
-
-// Cargar recetas favoritas
-function loadUserFavorites() {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
-    
-    const favoritesContainer = document.getElementById('favoritesContainer');
-    if (!favoritesContainer) return;
-    
-    // Obtener usuario completo con sus favoritos
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const user = users.find(u => u.id === currentUser.id);
-    
-    if (!user || !user.favorites || user.favorites.length === 0) {
-        favoritesContainer.innerHTML = `
-            <div class="no-recipes">
-                <p>Aún no tienes recetas favoritas.</p>
-                <a href="index.html#recipes-section" class="btn btn-primary">Explorar recetas</a>
-            </div>
-        `;
-        return;
-    }
-    
-    // Obtener todas las recetas
-    const allRecipes = JSON.parse(localStorage.getItem('recipes')) || [];
-    
-    // Filtrar favoritos
-    const favoriteRecipes = allRecipes.filter(recipe => user.favorites.includes(recipe.id));
-    
-    // Mostrar favoritos
-    if (favoriteRecipes.length === 0) {
-        favoritesContainer.innerHTML = `
-            <div class="no-recipes">
-                <p>Aún no tienes recetas favoritas.</p>
-                <a href="index.html#recipes-section" class="btn btn-primary">Explorar recetas</a>
-            </div>
-        `;
-    } else {
-        favoritesContainer.innerHTML = favoriteRecipes.map(recipe => `
-            <div class="recipe-card">
-                <div class="recipe-image">
-                    <img src="${recipe.image}" alt="${recipe.title}">
-                </div>
-                <div class="recipe-content">
-                    <h3 class="recipe-title">${recipe.title}</h3>
-                    <div class="recipe-meta">
-                        <span>${formatDate(recipe.createdAt)}</span>
-                        <span class="recipe-rating">${generateStarRating(recipe.rating)} (${recipe.ratingCount || 0})</span>
-                    </div>
-                    <p class="recipe-description">${recipe.description}</p>
-                    <div class="recipe-footer">
-                        <div class="recipe-author">
-                            <img src="${getUserAvatar(recipe.authorId)}" alt="${recipe.author}">
-                            <span>${recipe.author}</span>
-                        </div>
-                        <a href="recipe.html?id=${recipe.id}" class="view-recipe">Ver Receta <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-}
-
-// Cargar comentarios del usuario
-function loadUserComments() {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
-    
-    const userCommentsContainer = document.getElementById('userCommentsContainer');
-    if (!userCommentsContainer) return;
-    
-    // Obtener todas las recetas
-    const allRecipes = JSON.parse(localStorage.getItem('recipes')) || [];
-    
-    // Buscar comentarios del usuario en todas las recetas
-    const userComments = [];
-    
-    allRecipes.forEach(recipe => {
-        if (recipe.comments) {
-            recipe.comments.forEach(comment => {
-                if (comment.userId === currentUser.id) {
-                    userComments.push({
-                        recipeId: recipe.id,
-                        recipeTitle: recipe.title,
-                        comment: comment
-                    });
-                }
-            });
-        }
-    });
-    
-    // Mostrar comentarios
-    if (userComments.length === 0) {
-        userCommentsContainer.innerHTML = `
-            <div class="no-comments">
-                <p>Aún no has comentado en ninguna receta.</p>
-                <a href="index.html#recipes-section" class="btn btn-primary">Explorar recetas</a>
-            </div>
-        `;
-    } else {
-        userCommentsContainer.innerHTML = userComments.map(item => `
-            <div class="comment-item">
-                <div class="comment-header">
-                    <div class="comment-recipe">
-                        <a href="recipe.html?id=${item.recipeId}">${item.recipeTitle}</a>
-                    </div>
-                    <div class="comment-date">${formatDate(item.comment.createdAt)}</div>
-                </div>
-                <div class="comment-rating">${generateStarRating(item.comment.rating)}</div>
-                <p class="comment-text">${item.comment.content}</p>
-            </div>
-        `).join('');
-    }
-}
-
-// Abrir modal para editar perfil
+// ✅ ABRIR/CERRAR MODAL
 function openEditProfileModal() {
     const editProfileModal = document.getElementById('editProfileModal');
     if (editProfileModal) {
@@ -352,7 +244,6 @@ function openEditProfileModal() {
     }
 }
 
-// Cerrar modal
 function closeEditProfileModal() {
     const editProfileModal = document.getElementById('editProfileModal');
     if (editProfileModal) {
@@ -360,155 +251,161 @@ function closeEditProfileModal() {
     }
 }
 
-// Actualizar perfil de usuario
-function updateUserProfile(e) {
+// ✅ ACTUALIZAR PERFIL - MEJORADO
+async function updateUserProfile(e) {
     e.preventDefault();
     
-    const firstName = document.getElementById('editFirstName').value;
-    const lastName = document.getElementById('editLastName').value;
-    const username = document.getElementById('editUsername').value;
-    const bio = document.getElementById('editBio').value;
-    
-    // Validaciones
-    if (!firstName || !lastName || !username) {
-        alert('Por favor, completa todos los campos obligatorios');
-        return;
-    }
-    
-    // Obtener usuario actual
     const currentUser = getCurrentUser();
     if (!currentUser) return;
     
-    // Actualizar en localStorage
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    const formData = new FormData(e.target);
+    const updateData = {
+        firstName: formData.get('firstName'),
+        lastName: formData.get('lastName'),
+        username: formData.get('username'),
+        bio: formData.get('bio')
+    };
     
-    if (userIndex !== -1) {
-        users[userIndex].firstName = firstName;
-        users[userIndex].lastName = lastName;
-        users[userIndex].username = username;
-        users[userIndex].bio = bio;
+    try {
+        const response = await fetch(`/users/${currentUser.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
         
-        // Actualizar avatar con el nuevo nombre si es necesario
-        if (users[userIndex].avatar.includes('ui-avatars.com')) {
-            users[userIndex].avatar = `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random`;
+        if (response.ok) {
+            alert('Perfil actualizado correctamente');
+            closeEditProfileModal();
+            // Recargar el perfil
+            loadUserProfile();
+        } else {
+            throw new Error('Error al actualizar el perfil');
         }
-        
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        // Actualizar sesión actual
-        const updatedUser = {
-            ...currentUser,
-            firstName,
-            lastName,
-            username
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        
-        // Actualizar UI
-        loadUserProfile();
-        
-        // Cerrar modal
-        closeEditProfileModal();
-        
-        alert('Perfil actualizado correctamente');
+    } catch (error) {
+        console.error('Error actualizando perfil:', error);
+        alert('Error al actualizar el perfil. Inténtalo de nuevo.');
     }
 }
 
-// Cambiar avatar
-function changeAvatar() {
-    const newAvatarUrl = prompt('Ingresa la URL de tu nueva imagen de perfil:');
-    
-    if (newAvatarUrl) {
-        // Verificar si es una URL válida
-        try {
-            new URL(newAvatarUrl);
-            
-            // Actualizar en localStorage
-            const currentUser = getCurrentUser();
-            if (!currentUser) return;
-            
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const userIndex = users.findIndex(u => u.id === currentUser.id);
-            
-            if (userIndex !== -1) {
-                users[userIndex].avatar = newAvatarUrl;
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                // Actualizar UI
-                const userAvatar = document.getElementById('userAvatar');
-                if (userAvatar) userAvatar.src = newAvatarUrl;
-                
-                alert('Avatar actualizado correctamente');
-            }
-        } catch (e) {
-            alert('Por favor, ingresa una URL válida');
-        }
-    }
-}
-
-// Eliminar receta
-function deleteRecipe(recipeId) {
-    // Obtener usuario actual
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
-    
-    // Obtener recetas
-    const recipes = JSON.parse(localStorage.getItem('recipes')) || [];
-    const recipeIndex = recipes.findIndex(recipe => recipe.id === recipeId);
-    
-    if (recipeIndex === -1) return;
-    
-    // Verificar que la receta pertenece al usuario
-    if (recipes[recipeIndex].authorId !== currentUser.id) {
-        alert('No tienes permiso para eliminar esta receta');
-        return;
-    }
-    
+// ✅ CONFIGURAR ACCIONES DE RECETAS
+function setupRecipeActions() {
     // Eliminar receta
-    recipes.splice(recipeIndex, 1);
-    localStorage.setItem('recipes', JSON.stringify(recipes));
+    document.querySelectorAll('.delete-recipe').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const recipeId = this.getAttribute('data-id');
+            if (confirm('¿Estás seguro de que deseas eliminar esta receta?')) {
+                deleteRecipe(recipeId);
+            }
+        });
+    });
     
-    // Actualizar lista de recetas del usuario
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const userIndex = users.findIndex(user => user.id === currentUser.id);
-    
-    if (userIndex !== -1) {
-        users[userIndex].recipes = users[userIndex].recipes.filter(id => id !== recipeId);
-        localStorage.setItem('users', JSON.stringify(users));
-    }
-    
-    // Recargar recetas
-    loadUserRecipes();
-    
-    // Actualizar estadísticas
-    updateUserStats(users[userIndex]);
-    
-    alert('Receta eliminada correctamente');
+    // Editar receta
+    document.querySelectorAll('.edit-recipe').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const recipeId = this.getAttribute('data-id');
+            editRecipe(recipeId);
+        });
+    });
 }
 
-// Editar receta
+// ✅ ELIMINAR RECETA - MEJORADO
+async function deleteRecipe(recipeId) {
+    try {
+        const response = await fetch(`/recipes/${recipeId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('Receta eliminada correctamente');
+            // Recargar el perfil
+            loadUserProfile();
+        } else {
+            throw new Error('Error al eliminar la receta');
+        }
+    } catch (error) {
+        console.error('Error eliminando receta:', error);
+        alert('Error al eliminar la receta. Inténtalo de nuevo.');
+    }
+}
+
+// ✅ EDITAR RECETA
 function editRecipe(recipeId) {
-    // Obtener usuario actual
+    window.location.href = `edit-recipe.html?id=${recipeId}`;
+}
+
+// ✅ FALLBACK A LOCALSTORAGE - ACTUALIZADO
+function loadProfileFromLocalStorage() {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
     
-    // Obtener recetas
-    const recipes = JSON.parse(localStorage.getItem('recipes')) || [];
-    const recipe = recipes.find(r => r.id === recipeId);
+    console.log('📱 Usando datos de localStorage como fallback');
     
-    if (!recipe) {
-        alert('No se encontró la receta');
-        return;
+    // Mostrar datos básicos del usuario logueado
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
+    
+    if (userAvatar) {
+        userAvatar.src = currentUser.avatar || `https://ui-avatars.com/api/?name=${currentUser.firstName}+${currentUser.lastName}&background=random`;
+    }
+    if (userName) {
+        userName.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+    }
+    if (userEmail) {
+        userEmail.textContent = currentUser.email;
     }
     
-    // Verificar que la receta pertenece al usuario
-    if (recipe.authorId !== currentUser.id) {
-        alert('No tienes permiso para editar esta receta');
-        return;
+    // Resetear estadísticas
+    const recipesCount = document.getElementById('recipesCount');
+    if (recipesCount) recipesCount.textContent = '0';
+    
+    // Mostrar mensaje de que no hay recetas
+    const userRecipesContainer = document.getElementById('userRecipesContainer');
+    if (userRecipesContainer) {
+        userRecipesContainer.innerHTML = `
+            <div class="no-recipes">
+                <p>Aún no has publicado ninguna receta.</p>
+                <a href="add-recipe.html" class="btn btn-primary">Publicar mi primera receta</a>
+            </div>
+        `;
+    }
+}
+
+// ✅ FUNCIONES AUXILIARES
+function formatDate(dateString) {
+    if (!dateString) return 'Fecha desconocida';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } catch (e) {
+        return 'Fecha inválida';
+    }
+}
+
+function generateStarRating(rating) {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars.push('<i class="fas fa-star"></i>');
     }
     
-    // Redireccionar a la página de edición con el ID de la receta
-    window.location.href = `edit-recipe.html?id=${recipeId}`;
+    if (hasHalfStar) {
+        stars.push('<i class="fas fa-star-half-alt"></i>');
+    }
+    
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars.push('<i class="far fa-star"></i>');
+    }
+    
+    return stars.join('');
 }
