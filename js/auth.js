@@ -74,58 +74,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Las contraseñas no coinciden');
                 return;
             }
-            
             if (!terms) {
                 alert('Debes aceptar los términos y condiciones');
                 return;
             }
-            
-            // Verificar si el correo o usuario ya existen
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            if (users.some(user => user.email === email)) {
-                alert('Este correo electrónico ya está registrado');
-                return;
-            }
-            
-            if (users.some(user => user.username === username)) {
-                alert('Este nombre de usuario ya está en uso');
-                return;
-            }
-            
-            // Crear nuevo usuario
-            const newUser = {
-                id: Date.now(),
-                firstName,
-                lastName,
-                username,
-                email,
-                password,
-                avatar: `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random`,
-                joinDate: new Date().toISOString(),
-                recipes: [],
-                favorites: []
-            };
-            
-            // Guardar usuario en localStorage
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // Autenticar usuario
-            localStorage.setItem('currentUser', JSON.stringify({
-                id: newUser.id,
-                username: newUser.username,
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                avatar: newUser.avatar
-            }));
-            
-            alert('¡Registro exitoso!');
-            window.location.href = 'index.html';
+
+            // Enviar datos al servidor Oracle
+            const avatar = `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random`;
+            fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName, username, email, password, avatar })
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || res.statusText);
+                return data;
+            })
+            .then(data => {
+                localStorage.setItem('currentUser', JSON.stringify({
+                    id: data.id,
+                    username,
+                    firstName,
+                    lastName,
+                    email,
+                    avatar
+                }));
+                alert('¡Registro exitoso!');
+                window.location.href = 'index.html';
+            })
+            .catch(err => alert('Error en registro: ' + err.message));
         });
     }
     
-    // Inicio de sesión
+    // Inicio de sesión CON ORACLE
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
@@ -135,20 +117,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('password').value;
             const remember = document.getElementById('remember')?.checked || false;
             
-            // Verificar credenciales
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const user = users.find(user => user.email === email && user.password === password);
-            
-            if (user) {
-                // Usuario autenticado
-                localStorage.setItem('currentUser', JSON.stringify({
-                    id: user.id,
-                    username: user.username,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    email: user.email,
-                    avatar: user.avatar
-                }));
+            // Autenticar con Oracle via backend
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Error de autenticación');
+                return data;
+            })
+            .then(user => {
+                // Usuario autenticado desde Oracle
+                localStorage.setItem('currentUser', JSON.stringify(user));
                 
                 if (remember) {
                     localStorage.setItem('rememberedUser', email);
@@ -156,10 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.removeItem('rememberedUser');
                 }
                 
+                alert('¡Inicio de sesión exitoso!');
                 window.location.href = 'index.html';
-            } else {
-                alert('Correo electrónico o contraseña incorrectos');
-            }
+            })
+            .catch(err => {
+                alert('Error: ' + err.message);
+            });
         });
         
         // Autocompletar correo si hay usuario recordado

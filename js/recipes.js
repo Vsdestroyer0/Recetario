@@ -72,54 +72,38 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadRecipes() {
     const recipesContainer = document.getElementById('recipesContainer');
     if (!recipesContainer) return;
-    
-    // Obtener filtros
+
     const categoryFilter = document.getElementById('categoryFilter')?.value || 'all';
     const sortFilter = document.getElementById('sortFilter')?.value || 'latest';
-    
-    // Cargar recetas desde localStorage o datos de ejemplo
-    let recipes = JSON.parse(localStorage.getItem('recipes')) || getSampleRecipes();
-    
-    // Aplicar filtro de categoría
-    if (categoryFilter !== 'all') {
-        recipes = recipes.filter(recipe => recipe.category === categoryFilter);
-    }
-    
-    // Aplicar ordenamiento
-    recipes = sortRecipes(recipes, sortFilter);
-    
-    // Mostrar recetas en el contenedor
-    recipesContainer.innerHTML = recipes.map(recipe => `
-        <div class="recipe-card">
-            <div class="recipe-image">
-                <img src="${recipe.image}" alt="${recipe.title}">
-            </div>
-            <div class="recipe-content">
-                <h3 class="recipe-title">${recipe.title}</h3>
-                <div class="recipe-meta">
-                    <span>${formatDate(recipe.createdAt)}</span>
-                    <span class="recipe-rating">${generateStarRating(recipe.rating)} (${recipe.ratingCount || 0})</span>
-                </div>
-                <p class="recipe-description">${recipe.description}</p>
-                <div class="recipe-footer">
-                    <div class="recipe-author">
-                        <img src="${getUserAvatar(recipe.authorId)}" alt="${recipe.author}">
-                        <span>${recipe.author}</span>
+
+    fetch('/recipes')
+        .then(res => res.json())
+        .then(recipes => {
+            if (categoryFilter !== 'all') recipes = recipes.filter(r => r.category === categoryFilter);
+            recipes = sortRecipes(recipes, sortFilter);
+            recipesContainer.innerHTML = recipes.map(recipe => `
+                <div class="recipe-card">
+                    <div class="recipe-image"><img src="${recipe.image}" alt="${recipe.title}"></div>
+                    <div class="recipe-content">
+                        <h3 class="recipe-title">${recipe.title}</h3>
+                        <div class="recipe-meta">
+                            <span>${formatDate(recipe.createdAt)}</span>
+                            <span class="recipe-rating">${generateStarRating(recipe.rating)} (${recipe.ratingCount || 0})</span>
+                        </div>
+                        <p class="recipe-description">${recipe.description}</p>
+                        <div class="recipe-footer">
+                            <div class="recipe-author">
+                                <img src="${recipe.authorAvatar || getUserAvatar(recipe.authorId)}" alt="${recipe.author}">
+                                <span>${recipe.author}</span>
+                            </div>
+                            <a href="recipe.html?id=${recipe._id}" class="view-recipe">Ver Receta <i class="fas fa-arrow-right"></i></a>
+                        </div>
                     </div>
-                    <a href="recipe.html?id=${recipe.id}" class="view-recipe">Ver Receta <i class="fas fa-arrow-right"></i></a>
                 </div>
-            </div>
-        </div>
-    `).join('');
-    
-    // Si no hay recetas
-    if (recipes.length === 0) {
-        recipesContainer.innerHTML = `
-            <div class="no-recipes">
-                <p>No se encontraron recetas con los filtros seleccionados.</p>
-            </div>
-        `;
-    }
+            `).join('');
+            if (recipes.length === 0) recipesContainer.innerHTML = `<div class="no-recipes"><p>No hay recetas.</p></div>`;
+        })
+        .catch(err => console.error('Error cargando recetas:', err));
 }
 
 // Cargar detalles de una receta
@@ -136,77 +120,78 @@ function loadRecipeDetails() {
         return;
     }
     
-    // Cargar recetas desde localStorage o datos de ejemplo
-    const recipes = JSON.parse(localStorage.getItem('recipes')) || getSampleRecipes();
-    const recipe = recipes.find(r => r.id === recipeId);
-    
-    if (!recipe) {
-        recipeContainer.innerHTML = `
-            <div class="recipe-not-found">
-                <h2>Receta no encontrada</h2>
-                <p>La receta que buscas no existe o ha sido eliminada.</p>
-                <a href="index.html" class="btn btn-primary">Volver al inicio</a>
-            </div>
-        `;
-        return;
-    }
-    
-    // Actualizar título de la página
-    document.title = `${recipe.title} - KiwiLimón`;
-    
-    // Mostrar detalles de la receta
-    recipeContainer.innerHTML = `
-        <div class="recipe-header">
-            <img src="${recipe.image}" alt="${recipe.title}" class="recipe-header-image">
-            <div class="recipe-header-overlay">
-                <h1 class="recipe-title-large">${recipe.title}</h1>
-                <div class="recipe-author-large">
-                    <img src="${getUserAvatar(recipe.authorId)}" alt="${recipe.author}">
-                    <span>Por ${recipe.author}</span>
+    fetch(`/recipes/${recipeId}`)
+        .then(res => res.json())
+        .then(recipe => {
+            if (!recipe) {
+                recipeContainer.innerHTML = `
+                    <div class="recipe-not-found">
+                        <h2>Receta no encontrada</h2>
+                        <p>La receta que buscas no existe o ha sido eliminada.</p>
+                        <a href="index.html" class="btn btn-primary">Volver al inicio</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Actualizar título de la página
+            document.title = `${recipe.title} - KiwiLimón`;
+            
+            // Mostrar detalles de la receta
+            recipeContainer.innerHTML = `
+                <div class="recipe-header">
+                    <img src="${recipe.image}" alt="${recipe.title}" class="recipe-header-image">
+                    <div class="recipe-header-overlay">
+                        <h1 class="recipe-title-large">${recipe.title}</h1>
+                        <div class="recipe-author-large">
+                            <img src="${getUserAvatar(recipe.authorId)}" alt="${recipe.author}">
+                            <span>Por ${recipe.author}</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="recipe-stats">
-            <div class="stat-item">
-                <span class="stat-value">${recipe.prepTime}</span>
-                <span class="stat-label">Prep (min)</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">${recipe.cookTime}</span>
-                <span class="stat-label">Cocción (min)</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">${recipe.servings}</span>
-                <span class="stat-label">Porciones</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">${generateStarRating(recipe.rating)}</span>
-                <span class="stat-label">${recipe.rating.toFixed(1)} (${recipe.ratingCount || 0})</span>
-            </div>
-        </div>
-        
-        <div class="recipe-body">
-            <p class="recipe-description-large">${recipe.description}</p>
+                
+                <div class="recipe-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">${recipe.prepTime}</span>
+                        <span class="stat-label">Prep (min)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${recipe.cookTime}</span>
+                        <span class="stat-label">Cocción (min)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${recipe.servings}</span>
+                        <span class="stat-label">Porciones</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${generateStarRating(recipe.rating)}</span>
+                        <span class="stat-label">${recipe.rating.toFixed(1)} (${recipe.ratingCount || 0})</span>
+                    </div>
+                </div>
+                
+                <div class="recipe-body">
+                    <p class="recipe-description-large">${recipe.description}</p>
+                    
+                    <div class="recipe-section">
+                        <h2 class="recipe-section-title">Ingredientes</h2>
+                        <ul class="ingredients-list">
+                            ${recipe.ingredients.map(ing => `<li>${ing}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="recipe-section">
+                        <h2 class="recipe-section-title">Instrucciones</h2>
+                        <ol class="instructions-list">
+                            ${recipe.instructions.map(inst => `<li>${inst}</li>`).join('')}
+                        </ol>
+                    </div>
+                </div>
+            `;
             
-            <div class="recipe-section">
-                <h2 class="recipe-section-title">Ingredientes</h2>
-                <ul class="ingredients-list">
-                    ${recipe.ingredients.map(ing => `<li>${ing}</li>`).join('')}
-                </ul>
-            </div>
-            
-            <div class="recipe-section">
-                <h2 class="recipe-section-title">Instrucciones</h2>
-                <ol class="instructions-list">
-                    ${recipe.instructions.map(inst => `<li>${inst}</li>`).join('')}
-                </ol>
-            </div>
-        </div>
-    `;
-    
-    // Cargar comentarios
-    loadComments(recipe.id);
+            // Cargar comentarios
+            loadComments(recipeId);
+        })
+        .catch(err => console.error('Error cargando receta:', err));
 }
 
 // Cargar comentarios de una receta
@@ -214,110 +199,93 @@ function loadComments(recipeId) {
     const commentsList = document.getElementById('commentsList');
     if (!commentsList) return;
     
-    // Obtener recetas
-    const recipes = JSON.parse(localStorage.getItem('recipes')) || getSampleRecipes();
-    const recipe = recipes.find(r => r.id === recipeId);
-    
-    if (!recipe || !recipe.comments || recipe.comments.length === 0) {
-        commentsList.innerHTML = `
-            <div class="no-comments">
-                <p>No hay comentarios para esta receta. ¡Sé el primero en comentar!</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Mostrar comentarios
-    commentsList.innerHTML = recipe.comments.map(comment => `
-        <div class="comment-item">
-            <div class="comment-header">
-                <div class="comment-author">
-                    <img src="${getUserAvatar(comment.userId)}" alt="${comment.author}">
-                    <span>${comment.author}</span>
+    fetch(`/recipes/${recipeId}/comments`)
+        .then(res => res.json())
+        .then(comments => {
+            if (!comments || comments.length === 0) {
+                commentsList.innerHTML = `
+                    <div class="no-comments">
+                        <p>No hay comentarios para esta receta. ¡Sé el primero en comentar!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Mostrar comentarios
+            commentsList.innerHTML = comments.map(comment => `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <img src="${getUserAvatar(comment.userId)}" alt="${comment.author}">
+                            <span>${comment.author}</span>
+                        </div>
+                        <div class="comment-date">${formatDate(comment.createdAt)}</div>
+                    </div>
+                    <div class="comment-rating">${generateStarRating(comment.rating)}</div>
+                    <p class="comment-text">${comment.content}</p>
                 </div>
-                <div class="comment-date">${formatDate(comment.createdAt)}</div>
-            </div>
-            <div class="comment-rating">${generateStarRating(comment.rating)}</div>
-            <p class="comment-text">${comment.content}</p>
-        </div>
-    `).join('');
+            `).join('');
+        })
+        .catch(err => console.error('Error cargando comentarios:', err));
 }
 
 // Añadir un comentario
 function addComment(e) {
     e.preventDefault();
-    
-    if (!isAuthenticated()) {
-        alert('Debes iniciar sesión para comentar');
-        return;
-    }
-    
-    // Obtener datos del formulario
+    if (!isAuthenticated()) return alert('Debes iniciar sesión para comentar');
     const urlParams = new URLSearchParams(window.location.search);
-    const recipeId = parseInt(urlParams.get('id'));
-    const ratingValue = document.querySelector('input[name="rating"]:checked')?.value;
-    const commentText = document.getElementById('commentText').value;
-    
-    if (!ratingValue) {
-        alert('Por favor, selecciona una valoración');
-        return;
-    }
-    
-    // Obtener usuario actual
+    const rid = urlParams.get('id');
+    const content = document.getElementById('commentContent').value;
+    const rating = parseInt(document.getElementById('commentRating').value);
     const currentUser = getCurrentUser();
-    
-    // Obtener recetas
-    const recipes = JSON.parse(localStorage.getItem('recipes')) || getSampleRecipes();
-    const recipeIndex = recipes.findIndex(r => r.id === recipeId);
-    
-    if (recipeIndex === -1) {
-        alert('Receta no encontrada');
-        return;
-    }
-    
-    // Crear comentario
-    const newComment = {
-        id: Date.now(),
-        userId: currentUser.id,
-        author: `${currentUser.firstName} ${currentUser.lastName}`,
-        rating: parseFloat(ratingValue),
-        content: commentText,
-        createdAt: new Date().toISOString()
-    };
-    
-    // Inicializar array de comentarios si no existe
-    if (!recipes[recipeIndex].comments) {
-        recipes[recipeIndex].comments = [];
-    }
-    
-    // Añadir comentario
-    recipes[recipeIndex].comments.unshift(newComment);
-    
-    // Actualizar valoración media
-    updateRecipeRating(recipes[recipeIndex]);
-    
-    // Guardar cambios
-    localStorage.setItem('recipes', JSON.stringify(recipes));
-    
-    // Recargar comentarios
-    loadComments(recipeId);
-    
-    // Limpiar formulario
-    document.getElementById('commentText').value = '';
-    document.querySelector('input[name="rating"]:checked').checked = false;
-    
-    alert('¡Comentario añadido con éxito!');
+    fetch(`/recipes/${rid}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, content, rating })
+    })
+        .then(res => res.json())
+        .then(() => window.location.reload())
+        .catch(err => alert('Error al agregar comentario: ' + err.message));
 }
 
-// Actualizar valoración media de una receta
-function updateRecipeRating(recipe) {
-    if (!recipe.comments || recipe.comments.length === 0) return;
-    
-    const ratings = recipe.comments.map(comment => comment.rating);
-    const avgRating = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-    
-    recipe.rating = parseFloat(avgRating.toFixed(1));
-    recipe.ratingCount = ratings.length;
+// Enviar formulario de receta
+function submitRecipe(e) {
+    e.preventDefault();
+    if (!isAuthenticated()) {
+        alert('Debes iniciar sesión para publicar una receta');
+        window.location.href = 'login.html';
+        return;
+    }
+    const currentUser = getCurrentUser();
+    const recipeData = {
+        title: document.getElementById('recipeTitle').value,
+        description: document.getElementById('recipeDescription').value,
+        category: document.getElementById('recipeCategory').value,
+        difficulty: document.getElementById('recipeDifficulty').value,
+        prepTime: parseInt(document.getElementById('prepTime').value),
+        cookTime: parseInt(document.getElementById('cookTime').value),
+        servings: parseInt(document.getElementById('servings').value),
+        ingredients: Array.from(document.querySelectorAll('.ingredient-input')).map(inp => inp.value).filter(v => v),
+        instructions: Array.from(document.querySelectorAll('.instruction-input')).map(inp => inp.value).filter(v => v.trim()),
+        image: document.getElementById('recipeImage').files[0] ? URL.createObjectURL(document.getElementById('recipeImage').files[0]) : document.getElementById('recipeImageUrl').value,
+        authorId: currentUser.id
+    };
+    fetch('/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recipeData)
+    })
+        .then(res => res.json())
+        .then(result => fetch(`/users/${currentUser.id}/recipes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipeId: result.insertedId })
+        }).then(() => result.insertedId))
+        .then(id => {
+            alert('Receta publicada con éxito');
+            window.location.href = `recipe.html?id=${id}`;
+        })
+        .catch(err => alert('Error al publicar receta: ' + err.message));
 }
 
 // Añadir fila de ingrediente
@@ -382,254 +350,6 @@ function updateStepNumbers() {
     instructionRows.forEach((row, index) => {
         row.querySelector('.step-number').textContent = index + 1;
     });
-}
-
-// Enviar formulario de receta
-function submitRecipe(e) {
-    e.preventDefault();
-    
-    if (!isAuthenticated()) {
-        alert('Debes iniciar sesión para publicar una receta');
-        window.location.href = 'login.html';
-        return;
-    }
-    
-    // Obtener datos del formulario
-    const title = document.getElementById('recipeTitle').value;
-    const description = document.getElementById('recipeDescription').value;
-    const category = document.getElementById('recipeCategory').value;
-    const difficulty = document.getElementById('recipeDifficulty').value;
-    const prepTime = parseInt(document.getElementById('prepTime').value);
-    const cookTime = parseInt(document.getElementById('cookTime').value);
-    const servings = parseInt(document.getElementById('servings').value);
-    
-    // Obtener imagen
-    let imageUrl = document.getElementById('recipeImageUrl').value;
-    const imageFile = document.getElementById('recipeImage').files[0];
-    
-    // Si hay un archivo de imagen seleccionado, usar eso en lugar de la URL
-    if (imageFile) {
-        // En una aplicación real, esto subiría el archivo a un servidor
-        // y obtendríamos una URL, pero para esta demo usaremos URL.createObjectURL
-        imageUrl = URL.createObjectURL(imageFile);
-    }
-    
-    // Si no hay imagen subida ni URL, usar una imagen aleatoria
-    if (!imageUrl) {
-        imageUrl = `https://source.unsplash.com/random/800x600/?food,${title.replace(/\s+/g, '-')}`;
-    }
-    
-    // Obtener ingredientes
-    const ingredientInputs = document.querySelectorAll('.ingredient-input');
-    const quantityInputs = document.querySelectorAll('.quantity-input');
-    const ingredients = [];
-    
-    for (let i = 0; i < ingredientInputs.length; i++) {
-        const ingredient = ingredientInputs[i].value;
-        const quantity = quantityInputs[i].value;
-        
-        if (ingredient) {
-            ingredients.push(quantity ? `${quantity} de ${ingredient}` : ingredient);
-        }
-    }
-    
-    // Obtener instrucciones
-    const instructionInputs = document.querySelectorAll('.instruction-input');
-    const instructions = Array.from(instructionInputs)
-        .map(input => input.value)
-        .filter(instruction => instruction.trim() !== '');
-    
-    // Validar datos
-    if (ingredients.length === 0) {
-        alert('Debes añadir al menos un ingrediente');
-        return;
-    }
-    
-    if (instructions.length === 0) {
-        alert('Debes añadir al menos una instrucción');
-        return;
-    }
-    
-    // Obtener usuario actual
-    const currentUser = getCurrentUser();
-    
-    // Crear nueva receta
-    const newRecipe = {
-        id: Date.now(),
-        title,
-        description,
-        category,
-        difficulty,
-        prepTime,
-        cookTime,
-        servings,
-        ingredients,
-        instructions,
-        authorId: currentUser.id,
-        author: `${currentUser.firstName} ${currentUser.lastName}`,
-        image: imageUrl,
-        rating: 0,
-        ratingCount: 0,
-        createdAt: new Date().toISOString(),
-        comments: []
-    };
-    
-    // Guardar receta en localStorage
-    const recipes = JSON.parse(localStorage.getItem('recipes')) || [];
-    recipes.unshift(newRecipe); // Añadir al inicio para que aparezca primero
-    localStorage.setItem('recipes', JSON.stringify(recipes));
-    
-    // Actualizar recetas del usuario
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const userIndex = users.findIndex(user => user.id === currentUser.id);
-    
-    if (userIndex !== -1) {
-        if (!users[userIndex].recipes) {
-            users[userIndex].recipes = [];
-        }
-        users[userIndex].recipes.push(newRecipe.id);
-        localStorage.setItem('users', JSON.stringify(users));
-    }
-    
-    alert('¡Receta publicada con éxito!');
-    window.location.href = `recipe.html?id=${newRecipe.id}`;
-}
-
-// Obtener recetas de ejemplo desde el archivo JSON
-function getSampleRecipes() {
-    // En un entorno real, esto se haría con una petición fetch,
-    // pero para simplificar usaremos datos estáticos
-    return [
-        {
-            "id": 1,
-            "title": "Tacos al Pastor",
-            "description": "Deliciosos tacos al pastor con piña, cebolla y cilantro. Una receta tradicional mexicana que te encantará.",
-            "category": "main",
-            "difficulty": "medium",
-            "prepTime": 30,
-            "cookTime": 20,
-            "servings": 4,
-            "ingredients": [
-                "500g de carne de cerdo marinada",
-                "8 tortillas de maíz",
-                "1/2 piña cortada en cubos",
-                "1 cebolla picada",
-                "Cilantro fresco picado",
-                "2 limones",
-                "Salsa al gusto"
-            ],
-            "instructions": [
-                "Cortar la carne en trozos pequeños y dorarla en una sartén.",
-                "Calentar las tortillas en un comal o sartén.",
-                "Colocar la carne sobre las tortillas.",
-                "Añadir piña, cebolla y cilantro al gusto.",
-                "Exprimir jugo de limón y añadir salsa."
-            ],
-            "authorId": 1,
-            "author": "Chef Master",
-            "image": "https://source.unsplash.com/random/800x600/?tacos",
-            "rating": 4.8,
-            "ratingCount": 24,
-            "createdAt": "2025-05-15T10:30:00Z",
-            "comments": [
-                {
-                    "id": 101,
-                    "userId": 2,
-                    "author": "María López",
-                    "rating": 5,
-                    "content": "¡Excelente receta! La hice para mi familia y les encantó.",
-                    "createdAt": "2025-05-16T14:20:00Z"
-                }
-            ]
-        },
-        {
-            "id": 2,
-            "title": "Pastel de Chocolate",
-            "description": "Un delicioso pastel de chocolate húmedo con cobertura de ganache. Perfecto para cualquier celebración.",
-            "category": "dessert",
-            "difficulty": "medium",
-            "prepTime": 20,
-            "cookTime": 40,
-            "servings": 8,
-            "ingredients": [
-                "200g de chocolate negro",
-                "200g de mantequilla",
-                "200g de azúcar",
-                "4 huevos",
-                "150g de harina",
-                "1 cucharadita de polvo de hornear",
-                "100ml de crema para la cobertura"
-            ],
-            "instructions": [
-                "Precalentar el horno a 180°C.",
-                "Derretir el chocolate con la mantequilla.",
-                "Batir los huevos con el azúcar e incorporar la mezcla de chocolate.",
-                "Añadir la harina y el polvo de hornear tamizados.",
-                "Hornear durante 35-40 minutos.",
-                "Preparar la cobertura y cubrir el pastel una vez frío."
-            ],
-            "authorId": 1,
-            "author": "Chef Master",
-            "image": "https://source.unsplash.com/random/800x600/?chocolate-cake",
-            "rating": 4.7,
-            "ratingCount": 18,
-            "createdAt": "2025-05-10T15:45:00Z",
-            "comments": [
-                {
-                    "id": 102,
-                    "userId": 2,
-                    "author": "María López",
-                    "rating": 5,
-                    "content": "Este pastel es una delicia. La textura es perfecta.",
-                    "createdAt": "2025-05-12T11:30:00Z"
-                }
-            ]
-        },
-        {
-            "id": 3,
-            "title": "Ensalada César",
-            "description": "Una clásica ensalada César con pollo a la parrilla, croutones caseros y aderezo cremoso.",
-            "category": "main",
-            "difficulty": "easy",
-            "prepTime": 15,
-            "cookTime": 10,
-            "servings": 2,
-            "ingredients": [
-                "1 lechuga romana",
-                "200g de pechuga de pollo",
-                "50g de queso parmesano",
-                "Croutones",
-                "2 cucharadas de mayonesa",
-                "1 cucharada de mostaza",
-                "1 diente de ajo",
-                "Jugo de limón",
-                "Sal y pimienta"
-            ],
-            "instructions": [
-                "Cocinar el pollo a la parrilla y cortarlo en tiras.",
-                "Lavar y cortar la lechuga en trozos.",
-                "Preparar el aderezo mezclando mayonesa, mostaza, ajo, jugo de limón, sal y pimienta.",
-                "Mezclar la lechuga con el aderezo.",
-                "Añadir el pollo, croutones y queso parmesano rallado."
-            ],
-            "authorId": 2,
-            "author": "María López",
-            "image": "https://source.unsplash.com/random/800x600/?caesar-salad",
-            "rating": 4.5,
-            "ratingCount": 12,
-            "createdAt": "2025-05-18T09:15:00Z",
-            "comments": [
-                {
-                    "id": 103,
-                    "userId": 1,
-                    "author": "Chef Master",
-                    "rating": 4,
-                    "content": "Muy buena receta. El aderezo quedó perfecto.",
-                    "createdAt": "2025-05-19T13:40:00Z"
-                }
-            ]
-        }
-    ];
 }
 
 // Obtener el avatar de un usuario
