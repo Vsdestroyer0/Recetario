@@ -1,4 +1,4 @@
-# 🥝 KiwiLimón 🍋
+# Recetario UX
 
 <div align="center">
   
@@ -80,11 +80,18 @@ Actualmente, la implementación de la base de datos se encuentra en el archivo `
         <sub><b>Jose Ángel Guzman Zavaleta</b></sub>
       </a>
     </td>
+        <td align="center">
+      <a href="https://github.com/username">
+        <img src="https://github.com/identicons/jose.png" width="100px;" alt="Jose Ángel Guzman Zavaleta"/>
+        <br />
+        <sub><b>Jonathan</b></sub>
+      </a>
+    </td>
   </tr>
 </table>
 
 ---
 
 <div align="center">
-  <p>Hecho con ❤️ por el equipo de KiwiLimón</p>
+  <p>Hecho con ❤️ por el equipo de UX, UV</p>
 </div>
